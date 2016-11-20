@@ -1,0 +1,2 @@
+PKG_CXXFLAGS = -g -O3 -std=c++11
+PKG_LIBS = -llapack -lblas
