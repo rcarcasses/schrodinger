@@ -1,6 +1,11 @@
 #ifndef _CHEBSPEC_
 #define _CHEBSPEC_
+#include <stdlib.h>
 #include "solvspec.hpp"
+// arpack++ can be installed very easily as described in
+// https://github.com/m-reuter/arpackpp/blob/master/INSTALL.md
+// #include "areig.h"
+// #include "ardnsmat.h"
 
 extern "C" {
   // LU decomoposition of a general matrix
@@ -8,12 +13,16 @@ extern "C" {
 
   // generate inverse of a matrix given its LU decomposition
   void dgetri_(int* N, double* A, int* lda, int* IPIV, double* WORK, int* lwork, int* INFO);
-
   // product C= alphaA.B + betaC
   void dgemm_(char* TRANSA, char* TRANSB, const int* M,
-              const int* N, const int* K, double* alpha, double* A,
-              const int* LDA, double* B, const int* LDB, double* beta,
-              double* C, const int* LDC);
+                const int* N, const int* K, double* alpha, double* A,
+                const int* LDA, double* B, const int* LDB, double* beta,
+                double* C, const int* LDC);
+  // diagonalizer non symmetric real matrices
+  void dgeev_( char* jobvl, char* jobvr, int* n, double* a,
+              int* lda, double* wr, double* wi, double* vl, int* ldvl,
+              double* vr, int* ldvr, double* work, int* lwork, int* info );
+
 }
 
 class ChebSpec : public SolvSpec {
@@ -31,10 +40,11 @@ class ChebSpec : public SolvSpec {
 	  vector<vector<double>> UE;
 	  vector<vector<double>> US;
 	  void invMat(double*, int);
+	  void showMatrix(double* A, int Nr);
+	  virtual void setN(int n);
 
 	public:
 		virtual void findSpectrum(int nEigen);
-	  void setN(int n);
 		virtual void setPotential(vector<Point>);
 	  ChebSpec() {
 	    cout << "Initializing ChebSpec" << endl;
@@ -145,9 +155,9 @@ void ChebSpec::findSpectrum(int nEigen) {
   }
 
   // compute V
-  for(int i = 0; i < L; i++) {
+  for(int i = 0; i < L; i++)
     V[i] = scal * potFunc(0.5 * ((b - a) * x[i] + b + a));
-  }
+
 
   // compute Ehat
   Ehat.resize(L);
@@ -158,6 +168,7 @@ void ChebSpec::findSpectrum(int nEigen) {
     }
   }
 
+  cout << "[DEBUG] compute UE and US" << endl;
   // compute UE and US
   UE.resize(L);
   US.resize(L);
@@ -170,52 +181,77 @@ void ChebSpec::findSpectrum(int nEigen) {
     }
   }
 
+  cout << endl << "[DEBUG] compute A and B " << endl;
   // compute the A and B matrices, remove the first/last row/column
   int Nr = N - 1;
-  double* A   = new double[Nr * Nr];
-  double* B   = new double[Nr * Nr];
-  double* B1A = new double[Nr * Nr];
+  double A[Nr * Nr], B[Nr * Nr], B1A[Nr * Nr];
+
+  //lapack routines use the column-major order!
   for(int i = 0; i < Nr; i++) {
     for(int j = 0; j < Nr; j++) {
       // define A
-      A[i * Nr + j] = -US[i + 1][j + 1] + Ehat[i + 1][j + 1];
+      A[i + j * Nr] = -US[i + 1][j + 1] + Ehat[i + 1][j + 1];
       if(i == j)   // add the identity matrix
-        A[i * Nr + j] = A[i * Nr + j] - 1;
+        A[i + j * Nr] = A[i + j * Nr] - 1;
       // now B
-      B[i * Nr + j] = D2[i + 1][j + 1] + UE[i + 1][j + 1];
+      B[i + j * Nr] = D2[i + 1][j + 1] - UE[i + 1][j + 1];
     }
   }
-
-  // we need to find the eigenvalues of B^(-1)A
+  // we need to find the eigenvalues of A x = lambda B x
   invMat(B, Nr);      //B is now its inverse
-
+  //showMatrix(B, Nr);
   char TRANS = 'N';
-  int M,N,K,LDA,LDB,LDC = Nr;
   double ALPHA = 1.0;
   double BETA = 0.0;
-
-  //Calculate B^-1A = B1A
-  dgemm_(&TRANS, &TRANS, &M, &N, &K, &ALPHA, B, &LDA, A, &LDB, &BETA, B1A, &LDC);
-
+  double wr[Nr], w[Nr], wi[Nr], vl[Nr*Nr], vr[Nr*Nr];
+  //Calculate B^-1 * A = B1A
+  dgemm_(&TRANS, &TRANS, &Nr, &Nr, &Nr, &ALPHA, B, &Nr, A, &Nr, &BETA, B1A, &Nr);
   // diagonalize B1A
+  cout << "[DEBUG] diagonalize B1A...";
+  int n = Nr, lda = Nr, ldvl = Nr, ldvr = Nr, info, lwork;
+  double wkopt;
+  double* work;
+  /* Query and allocate the optimal workspace */
+  lwork = -1;
+  char vec[] = "Vectors";
+  dgeev_( vec, vec, &n, B1A, &lda, wr, wi, vl, &ldvl, vr, &ldvr,
+         &wkopt, &lwork, &info );
+  lwork = (int)wkopt;
+  work = (double*)malloc( lwork*sizeof(double) );
+  /* Solve eigenproblem */
+  dgeev_( "Vectors", "Vectors", &n, B1A, &lda, wr, wi, vl, &ldvl, vr, &ldvr,
+         work, &lwork, &info );
+  cout << "done" << endl;
 
-  delete[] A;
-  delete[] B;
-  delete[] B1A;
+  // DEBUG: print eigenvalues
+  for(int i = 0; i < Nr; i++)
+    cout << "E[" << i << "] = " << wr[i] / scal << endl;
+  // ENDDEBUG
+
+  free( (void*) work );
+  //delete[] WORK;
+}
+
+void ChebSpec::showMatrix(double* A, int Nr) {
+  cout << endl;
+  for(int i = 0; i < Nr; i++) {
+    for(int j = 0; j < Nr; j++) {
+      cout << A[i + j * Nr] << " ";
+    }
+    cout << endl;
+  }
 }
 
 void ChebSpec::invMat(double* A, int Nr)
 {
-  int *IPIV = new int[Nr+1];
-  int LWORK = Nr*Nr;
-  double *WORK = new double[LWORK];
-  int INFO;
-
-  dgetrf_(&Nr,&Nr,A,&Nr,IPIV,&INFO);
-  dgetri_(&Nr,A,&Nr,IPIV,WORK,&LWORK,&INFO);
-
-  delete IPIV;
-  delete WORK;
+    int *IPIV = new int[Nr+1];
+    int LWORK = Nr*Nr;
+    double *WORK = new double[LWORK];
+    int INFO;
+    dgetrf_(&Nr,&Nr,A,&Nr,IPIV,&INFO);
+    dgetri_(&Nr,A,&Nr,IPIV,WORK,&LWORK,&INFO);
+    delete[] IPIV;
+    delete[] WORK;
 }
 
 #endif

@@ -1,2 +1,2 @@
-PKG_CXXFLAGS = -g -O3 -std=c++11
-PKG_LIBS = -llapack -lblas
+PKG_CXXFLAGS = -g -O3 -std=c++11 -I/usr/local/include/arpackpp/
+PKG_LIBS = -larpack -lblas -llapack -lgfortran
