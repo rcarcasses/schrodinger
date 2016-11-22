@@ -50,8 +50,8 @@ class ChebSpec : public SolvSpec {
 		virtual void findSpectrum(int nEigen);
 		virtual void setPotential(vector<Point>);
 	  ChebSpec() {
-	    cout << "Initializing ChebSpec" << endl;
-	    setN(600);
+	    // cout << "Initializing ChebSpec" << endl;
+	    setN(400);
 	  }
 };
 
@@ -140,7 +140,6 @@ void ChebSpec::setN(int n) {
   for(int k = 0; k < L; k++)
     s += D2[0][k];
 
-  cout << "sum D2_Nk " << s;
 }
 
 void ChebSpec::setPotential(vector<Point> p) {
@@ -148,7 +147,7 @@ void ChebSpec::setPotential(vector<Point> p) {
   a = potential[0].x;
   b = potential[potential.size() - 1].x;
   scal = pow((b - a) / 2, 2);
-  cout << "Interval [" << a << ", " << b << "] mapped to [-1,1]" << endl;
+  // cout << "Interval [" << a << ", " << b << "] mapped to [-1,1]" << endl;
 }
 
 void ChebSpec::findSpectrum(int nEigen) {
@@ -233,8 +232,21 @@ void ChebSpec::findSpectrum(int nEigen) {
     for(int j = 0; j < Nr; j++)
       c += D[N][j + 1] * wf[j].y * wf[j].y * 0.5 * (b - a);
 
+    // set all the wavefunctions start growing positive from the left
+    double s = 1;
+    // get the sign of the derivative, this is important since it may be the case
+    // that the routine return the same eigenvector with a different sign, in that case
+    // the overall coefficient we would like to fit would have change the sign
+    for(int j = 4; j < Nr; j++) {
+      double der = ((25/12)*wf[j].y-4*wf[j-1].y+3*wf[j-2].y-(4/3)* wf[j-3].y+(1/4)* wf[j-4].y);
+      if(abs(der) > 1e-2) {
+        s = der / abs(der);
+        break;
+      }
+    }
+
     for(int j = 0; j < Nr; j++)
-        wf[j].y = wf[j].y / sqrt(c);
+        wf[j].y = s * wf[j].y / sqrt(c);
 
     Mode m(dprob.EigenvalueReal(i) / scal, wf);
     spectrum.addMode(m);

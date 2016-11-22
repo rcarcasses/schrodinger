@@ -18,7 +18,7 @@ class SolvSpec {
 	public:
 		// these values can be overrided later
 		double xMin  = -15;
-		double xMax  = 15;
+		double xMax  = 10;
 		double tol   = 1e-9;
 		double h     = 0.01; //                       _
 		int N        = 100;  // used only in ChebSpec  |
