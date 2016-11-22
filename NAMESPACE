@@ -1,0 +1,3 @@
+useDynLib(schrodinger)
+exportPattern("^[[:alpha:]]+")
+importFrom(Rcpp, evalCpp)
