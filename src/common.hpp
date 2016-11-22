@@ -37,6 +37,10 @@ struct Mode {
 	Mode() {   // default constructor for non good modes
 	    index = -1;
 	}
+	Mode(double e, vector<Point> f){
+		energy = e;
+		wavefunction = f;
+	}
 	Mode(double e, vector<Point> f, int n){
 		energy = e;
 		wavefunction = f;

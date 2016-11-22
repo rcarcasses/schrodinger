@@ -33,7 +33,7 @@ class SolvSpec {
 		Spectrum getSpectrum();
 		void savePotential();
 		SolvSpec() {
-		  cout << "Initializing spectral solver" << endl;
+		  // cout << "Initializing spectral solver" << endl;
 		}
 };
 
