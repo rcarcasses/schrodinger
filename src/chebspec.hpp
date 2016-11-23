@@ -51,7 +51,7 @@ class ChebSpec : public SolvSpec {
 		virtual void setPotential(vector<Point>);
 	  ChebSpec() {
 	    // cout << "Initializing ChebSpec" << endl;
-	    setN(400);
+	    setN(100);
 	  }
 };
 
@@ -213,14 +213,19 @@ void ChebSpec::findSpectrum(int nEigen) {
   ARdsNonSymMatrix<double, double> matrix(Nr, B1A);
 
   // Defining what we need: the four eigenvectors of A with largest magnitude.
-  ARluNonSymStdEig<double> dprob(nEigen, matrix, "SM", int(0.3 * Nr));
+  // cout << endl << "ev " << nEigen << "...";
+  ARluNonSymStdEig<double> dprob(max(2, nEigen), matrix, "SM", int(Nr));
 
   // Finding eigenvalues and eigenvectors.
   int nconv = dprob.FindEigenvectors();
+  // cout << dprob.EigenvalueReal(nconv - 1) << (nconv == nEigen) << endl;
   // Printing solution.
-  //Solution(matrix, dprob);
+  // Solution(matrix, dprob);
+
   // now we just need to put everything in our internal format
   // finally safelly add all the modes found to the spectrum (already in a nice way)
+  spectrum.clear();
+  spectrum.potential = potential;
   for (int i = 0; i < nconv; i++) {
     // build the wavefunction
     vector<Point> wf;

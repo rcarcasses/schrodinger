@@ -31,7 +31,7 @@ void Numerov::findMinPot(){
 		if (minPot.y > potential[i].y)
 			minPot = potential[i];
 
-    cout << "minPlot " << minPot.y << " at " << minPot.x <<endl;
+    // cout << "minPlot " << minPot.y << " at " << minPot.x <<endl;
 }
 
 double Numerov::diff(double E){
@@ -153,6 +153,10 @@ void Numerov::buildSol() {
 	for (int i = 1; i < sol.size(); i++)
 		c += sol[i].y * sol[i].y * (sol[i].x - sol[i - 1].x);
 
+	// TODO: this normalization process is not very good
+	// users are suggested to re-normalize the outcome of this
+	// by using some spline and quadrature adaptive algorithm for
+	// numerical integration
 	for (int i = 0; i < sol.size(); i++)
 		sol[i].y /= sqrt(c);
 

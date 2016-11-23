@@ -10,7 +10,7 @@ SolvSpec* n  = new Numerov();
 //SolvSpec* n  = new ChebSpec();
 
 // [[Rcpp::export]]
-void setMethod(std::string method) {
+void setSchroMethod(std::string method) {
   if(method == "numerov")
     n = new Numerov();
   else if(method == "cheb")
