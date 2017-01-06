@@ -1,32 +1,13 @@
 #ifndef _CHEBSPEC_
 #define _CHEBSPEC_
 #include <stdlib.h>
-#include "ardnsmat.h"
-#include "ardgnsym.h"
-#include "lnsymsol.h"
 #include "solvspec.hpp"
+#include <armadillo>
+
+using namespace std;
+using namespace arma;
 // arpack++ can be installed very easily as described in
 // https://github.com/m-reuter/arpackpp/blob/master/INSTALL.md
-// #include "areig.h"
-// #include "ardnsmat.h"
-
-extern "C" {
-  // LU decomoposition of a general matrix
-  // void dgetrf_(int* M, int *N, double* A, int* lda, int* IPIV, int* INFO);
-
-  // generate inverse of a matrix given its LU decomposition
-  void dgetri_(int* N, double* A, int* lda, int* IPIV, double* WORK, int* lwork, int* INFO);
-  // product C= alphaA.B + betaC
-  void dgemm_(char* TRANSA, char* TRANSB, const int* M,
-                const int* N, const int* K, double* alpha, double* A,
-                const int* LDA, double* B, const int* LDB, double* beta,
-                double* C, const int* LDC);
-  // diagonalizer non symmetric real matrices
-  void dgeev_( char* jobvl, char* jobvr, int* n, double* a,
-              int* lda, double* wr, double* wi, double* vl, int* ldvl,
-              double* vr, int* ldvr, double* work, int* lwork, int* info );
-
-}
 
 class ChebSpec : public SolvSpec {
 	private:
@@ -44,14 +25,14 @@ class ChebSpec : public SolvSpec {
 	  vector<vector<double>> US;
 	  void invMat(double*, int);
 	  void showMatrix(double* A, int Nr);
-	  virtual void setN(int n);
 
 	public:
+	  void setN(int n);
 		virtual void findSpectrum(int nEigen);
 		virtual void setPotential(vector<Point>);
 	  ChebSpec() {
 	    // cout << "Initializing ChebSpec" << endl;
-	    setN(100);
+	    setN(20);
 	  }
 };
 
@@ -184,53 +165,52 @@ void ChebSpec::findSpectrum(int nEigen) {
 
   // compute the A and B matrices, remove the first/last row/column
   int Nr = N - 1;
-  double* A   = new double[Nr * Nr];
-  double* B   = new double[Nr * Nr];
-  double* B1A = new double[Nr * Nr];
+  mat A(Nr, Nr);
+  mat B(Nr, Nr);
 
   //lapack routines use the column-major order!
   for(int i = 0; i < Nr; i++) {
     for(int j = 0; j < Nr; j++) {
       // define A
-      A[i + j * Nr] = -US[i + 1][j + 1] + Ehat[i + 1][j + 1];
+      A(i, j) = -US[i + 1][j + 1] + Ehat[i + 1][j + 1];
       if(i == j)   // add the identity matrix
-        A[i + j * Nr] = A[i + j * Nr] - 1;
+        A(i, j) = A[i + j * Nr] - 1;
       // now B
-      B[i + j * Nr] = D2[i + 1][j + 1] - UE[i + 1][j + 1];
+      B(i, j) = D2[i + 1][j + 1] - UE[i + 1][j + 1];
     }
   }
-  // we need to find the eigenvalues of A x = lambda B x
-  invMat(B, Nr);      //B is now its inverse
-  //showMatrix(B, Nr);
-  char TRANS = 'N';
-  double ALPHA = 1.0;
-  double BETA = 0.0;
 
-  //Calculate B^-1 * A = B1A
-  dgemm_(&TRANS, &TRANS, &Nr, &Nr, &Nr, &ALPHA, B, &Nr, A, &Nr, &BETA, B1A, &Nr);
+  mat B1A = inv(B) * A;
+  cx_vec cxeigval;
+  cx_mat cxeigvec;
 
-  // diagonalize B1A
-  ARdsNonSymMatrix<double, double> matrix(Nr, B1A);
+  // diagonalize
+  eig_gen(cxeigval, cxeigvec, B1A);
+  mat eigvec = real(cxeigvec);
+  vec eigval = real(cxeigval);
+  // we need to sort this
 
-  // Defining what we need: the four eigenvectors of A with largest magnitude.
-  // cout << endl << "ev " << nEigen << "...";
-  ARluNonSymStdEig<double> dprob(max(2, nEigen), matrix, "SM", int(Nr));
+  for(int i = 0; i < Nr; i++)
+    for(int j = 0; j < Nr; j++)
+      if(eigval(i) < eigval(j)) {
+        double temp = eigval(i);
+        eigval(i) = eigval(j);
+        eigval(j) = temp;
+        eigvec.swap_cols(i, j);
+      }
 
-  // Finding eigenvalues and eigenvectors.
-  int nconv = dprob.FindEigenvectors();
-  // cout << dprob.EigenvalueReal(nconv - 1) << (nconv == nEigen) << endl;
-  // Printing solution.
-  // Solution(matrix, dprob);
+  // for(int i = 0; i < Nr; i++)
+  //   cout << "E" << i << " = " << eigval(i) / scal << endl;
 
   // now we just need to put everything in our internal format
   // finally safelly add all the modes found to the spectrum (already in a nice way)
   spectrum.clear();
   spectrum.potential = potential;
-  for (int i = 0; i < nconv; i++) {
+  for (int i = 0; i < nEigen; i++) {
     // build the wavefunction
     vector<Point> wf;
     for(int j = 0; j < Nr; j++)
-      wf.push_back(Point(0.5 * ((b - a) * x[j] + b + a), dprob.EigenvectorReal(i, j)));
+      wf.push_back(Point(0.5 * ((b - a) * x[j] + b + a), eigvec(j,i)));
 
     // normalization loop
     double c = 0;
@@ -243,7 +223,9 @@ void ChebSpec::findSpectrum(int nEigen) {
     // that the routine return the same eigenvector with a different sign, in that case
     // the overall coefficient we would like to fit would have change the sign
     for(int j = 4; j < Nr; j++) {
-      double der = ((25/12)*wf[j].y-4*wf[j-1].y+3*wf[j-2].y-(4/3)* wf[j-3].y+(1/4)* wf[j-4].y);
+      // filter the data and compute the derivative
+      double der = (25/12)*int(1e3 * wf[j].y)-4*int(1e3 * wf[j-1].y)+3*int(1e3 * wf[j-2].y)-(4/3) * int(1e3 * wf[j-3].y)+(1/4)* int(1e3 * wf[j-4].y);
+      der /= 1e3;
       if(abs(der) > 1e-2) {
         s = der / abs(der);
         break;
@@ -253,13 +235,10 @@ void ChebSpec::findSpectrum(int nEigen) {
     for(int j = 0; j < Nr; j++)
         wf[j].y = s * wf[j].y / sqrt(c);
 
-    Mode m(dprob.EigenvalueReal(i) / scal, wf);
+    Mode m(eigval(i) / scal, wf);
     spectrum.addMode(m);
   }
 
-  delete[] A;
-  delete[] B;
-  delete[] B1A;
 }
 
 void ChebSpec::showMatrix(double* A, int Nr) {
@@ -270,18 +249,6 @@ void ChebSpec::showMatrix(double* A, int Nr) {
     }
     cout << endl;
   }
-}
-
-void ChebSpec::invMat(double* A, int Nr)
-{
-    int *IPIV = new int[Nr+1];
-    int LWORK = Nr*Nr;
-    double *WORK = new double[LWORK];
-    int INFO;
-    dgetrf_(&Nr,&Nr,A,&Nr,IPIV,&INFO);
-    dgetri_(&Nr,A,&Nr,IPIV,WORK,&LWORK,&INFO);
-    delete[] IPIV;
-    delete[] WORK;
 }
 
 #endif

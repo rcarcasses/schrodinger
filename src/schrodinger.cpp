@@ -5,16 +5,27 @@
 
 using namespace Rcpp;
 
+#define NUMEROV 1
+#define CHEBYSHEV 2
+
+Numerov* numerov = new Numerov();
+ChebSpec* chebyshev = new ChebSpec();
+
 // use numerov by default
-SolvSpec* n  = new Numerov();
-//SolvSpec* n  = new ChebSpec();
+SolvSpec* n = numerov;
+int method = NUMEROV;
 
 // [[Rcpp::export]]
-void setSchroMethod(std::string method) {
-  if(method == "numerov")
-    n = new Numerov();
-  else if(method == "cheb")
-    n = new ChebSpec();
+void setSchroMethod(std::string method, int N = -1) {
+  if(method == "numerov") {
+    n = numerov;
+    method = NUMEROV;
+  } else if(method == "cheb") {
+    if(N > 2)
+      chebyshev->setN(N);
+    n = chebyshev;
+    method = CHEBYSHEV;
+  }
 }
 
 // [[Rcpp::export]]
@@ -60,10 +71,9 @@ List getPotential() {
 }
 
 // [[Rcpp::export]]
-void computeSpectrum(int nEigen, double dE = 0.1, double tol = 1e-9, int N = 80) {
+void computeSpectrum(int nEigen, double dE = 0.1, double tol = 1e-9) {
   n->dEmin = dE;
   n->tol = tol;
-  n->N = N;
   n->findSpectrum(nEigen);
 }
 
