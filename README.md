@@ -16,7 +16,7 @@ The workflow is like this:
 
 ```r
 library(schrodinger)
-setSchroMethod('cheb')  # not really needed since it is the default value
+setSchroMethod('cheb')  # you can ignore this since *cheb* is already the default method
 setPotential(px, py)
 computeSpectrum(10)
 getEnergies()
