@@ -1,6 +1,6 @@
 This is an R package interface to C++ code that solves the one dimensional time independent Schrodinger equation. There are two ways to find the quantum spectrum, one using a Numerov algorithm implementation and another which uses a Chebyshev polynomial approach. Numerov routine seems to be better suited to compute the first one or two eigenvalues and eigenfunctions but for higher orders the Chebyshev routine seems to perform better (less time to get the same result). The two routines implemented provide a good way to cross check results computed with different methods.
 
-### Dependence
+### Dependencies
 The R package is created with Rcpp. The C++ code depends on the *armadillo* awesome library, make sure you have it in your path.
 
 ### Selecting routine
