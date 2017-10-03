@@ -11,6 +11,8 @@ setSchroMethod('numerov')
 ```
 and so on.
 
+The specific Chebyshev algorithm implemented is described [here](http://www.tandfonline.com/doi/full/10.1080/23311835.2015.1045223).
+
 ### Example
 The workflow is like this:
 
