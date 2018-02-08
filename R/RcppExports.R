@@ -2,30 +2,30 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 setSchroMethod <- function(method, N = -1L) {
-    invisible(.Call('schrodinger_setSchroMethod', PACKAGE = 'schrodinger', method, N))
+    invisible(.Call('_schrodinger_setSchroMethod', PACKAGE = 'schrodinger', method, N))
 }
 
 getEnergiesAndIndices <- function() {
-    .Call('schrodinger_getEnergiesAndIndices', PACKAGE = 'schrodinger')
+    .Call('_schrodinger_getEnergiesAndIndices', PACKAGE = 'schrodinger')
 }
 
 setPotential <- function(px = numeric(), py = numeric()) {
-    invisible(.Call('schrodinger_setPotential', PACKAGE = 'schrodinger', px, py))
+    invisible(.Call('_schrodinger_setPotential', PACKAGE = 'schrodinger', px, py))
 }
 
 getPotential <- function() {
-    .Call('schrodinger_getPotential', PACKAGE = 'schrodinger')
+    .Call('_schrodinger_getPotential', PACKAGE = 'schrodinger')
 }
 
 computeSpectrum <- function(nEigen, dE = 0.1, tol = 1e-9) {
-    invisible(.Call('schrodinger_computeSpectrum', PACKAGE = 'schrodinger', nEigen, dE, tol))
+    invisible(.Call('_schrodinger_computeSpectrum', PACKAGE = 'schrodinger', nEigen, dE, tol))
 }
 
 getEnergies <- function() {
-    .Call('schrodinger_getEnergies', PACKAGE = 'schrodinger')
+    .Call('_schrodinger_getEnergies', PACKAGE = 'schrodinger')
 }
 
 getWavefunctions <- function() {
-    .Call('schrodinger_getWavefunctions', PACKAGE = 'schrodinger')
+    .Call('_schrodinger_getWavefunctions', PACKAGE = 'schrodinger')
 }
 

@@ -13,9 +13,8 @@ class SolvSpec {
   protected:
 		vector<Point> potential;
 		Spectrum spectrum;
-		std::function<double(double)> potFunc;
-
 	public:
+		std::function<double(double)> potFunc;
 		// these values can be overrided later
 		double xMin  = -15;
 		double xMax  = 10;

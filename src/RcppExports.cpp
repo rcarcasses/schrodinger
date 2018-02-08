@@ -7,7 +7,7 @@ using namespace Rcpp;
 
 // setSchroMethod
 void setSchroMethod(std::string method, int N);
-RcppExport SEXP schrodinger_setSchroMethod(SEXP methodSEXP, SEXP NSEXP) {
+RcppExport SEXP _schrodinger_setSchroMethod(SEXP methodSEXP, SEXP NSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::string >::type method(methodSEXP);
@@ -18,7 +18,7 @@ END_RCPP
 }
 // getEnergiesAndIndices
 List getEnergiesAndIndices();
-RcppExport SEXP schrodinger_getEnergiesAndIndices() {
+RcppExport SEXP _schrodinger_getEnergiesAndIndices() {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -28,7 +28,7 @@ END_RCPP
 }
 // setPotential
 void setPotential(NumericVector px, NumericVector py);
-RcppExport SEXP schrodinger_setPotential(SEXP pxSEXP, SEXP pySEXP) {
+RcppExport SEXP _schrodinger_setPotential(SEXP pxSEXP, SEXP pySEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericVector >::type px(pxSEXP);
@@ -39,7 +39,7 @@ END_RCPP
 }
 // getPotential
 List getPotential();
-RcppExport SEXP schrodinger_getPotential() {
+RcppExport SEXP _schrodinger_getPotential() {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -49,7 +49,7 @@ END_RCPP
 }
 // computeSpectrum
 void computeSpectrum(int nEigen, double dE, double tol);
-RcppExport SEXP schrodinger_computeSpectrum(SEXP nEigenSEXP, SEXP dESEXP, SEXP tolSEXP) {
+RcppExport SEXP _schrodinger_computeSpectrum(SEXP nEigenSEXP, SEXP dESEXP, SEXP tolSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< int >::type nEigen(nEigenSEXP);
@@ -61,7 +61,7 @@ END_RCPP
 }
 // getEnergies
 NumericVector getEnergies();
-RcppExport SEXP schrodinger_getEnergies() {
+RcppExport SEXP _schrodinger_getEnergies() {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -71,11 +71,27 @@ END_RCPP
 }
 // getWavefunctions
 List getWavefunctions();
-RcppExport SEXP schrodinger_getWavefunctions() {
+RcppExport SEXP _schrodinger_getWavefunctions() {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     rcpp_result_gen = Rcpp::wrap(getWavefunctions());
     return rcpp_result_gen;
 END_RCPP
+}
+
+static const R_CallMethodDef CallEntries[] = {
+    {"_schrodinger_setSchroMethod", (DL_FUNC) &_schrodinger_setSchroMethod, 2},
+    {"_schrodinger_getEnergiesAndIndices", (DL_FUNC) &_schrodinger_getEnergiesAndIndices, 0},
+    {"_schrodinger_setPotential", (DL_FUNC) &_schrodinger_setPotential, 2},
+    {"_schrodinger_getPotential", (DL_FUNC) &_schrodinger_getPotential, 0},
+    {"_schrodinger_computeSpectrum", (DL_FUNC) &_schrodinger_computeSpectrum, 3},
+    {"_schrodinger_getEnergies", (DL_FUNC) &_schrodinger_getEnergies, 0},
+    {"_schrodinger_getWavefunctions", (DL_FUNC) &_schrodinger_getWavefunctions, 0},
+    {NULL, NULL, 0}
+};
+
+RcppExport void R_init_schrodinger(DllInfo *dll) {
+    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
 }
