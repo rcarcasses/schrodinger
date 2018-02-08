@@ -3,6 +3,14 @@ This is an R package interface to C++ code that solves the one dimensional time 
 ### Dependencies
 The R package is created with Rcpp. The C++ code depends on the *armadillo* awesome library, make sure you have it in your path.
 
+### Install
+```r
+# install devtools, ignore if already installed on your system
+install.packages('devtools')
+# install the library itself
+devtools::install_github('rcarcasses/schrodinger')
+```
+
 ### Selecting the algorithm
 The default algorithm is **cheb**, which is the Chebyshev version. If you want to use the Numerov version just:
 
@@ -18,7 +26,7 @@ The workflow is like this:
 
 ```r
 library(schrodinger)
-setSchroMethod('cheb')  # you can ignore this since *cheb* is already the default method
+setSchroMethod('cheb', 400)  # set 'cheb' method (Chebyshev) with 400 interpolation points.
 setPotential(px, py)
 computeSpectrum(10)
 getEnergies()
