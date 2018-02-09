@@ -8,28 +8,15 @@ using namespace Rcpp;
 #define NUMEROV 1
 #define CHEBYSHEV 2
 
-Numerov* numerov = new Numerov();
-ChebSpec* chebyshev = new ChebSpec();
-
-// use numerov by default
-SolvSpec* n = numerov;
-int method = NUMEROV;
-
-// [[Rcpp::export]]
-void setSchroMethod(std::string method, int N = -1) {
+SolvSpec* setSchroMethod(std::string method) {
   if(method == "numerov") {
-    n = numerov;
-    method = NUMEROV;
-  } else if(method == "cheb") {
-    if(N > 2)
-      chebyshev->setN(N);
-    n = chebyshev;
-    method = CHEBYSHEV;
+    return new Numerov();
   }
+  // use chebyshev as default method
+  return new ChebSpec();
 }
 
-// [[Rcpp::export]]
-List getEnergiesAndIndices() {
+List getEnergiesAndIndices(SolvSpec* n) {
   vector<Mode> modes = n->getSpectrum().modes;
   NumericVector energy, index;
   for(int i = 0; i < modes.size(); i++){
@@ -40,24 +27,7 @@ List getEnergiesAndIndices() {
   return List::create(Named("energy") = energy, Named("index") = index);
 }
 
-// [[Rcpp::export]]
-void setPotential(NumericVector px = NumericVector(), NumericVector py = NumericVector()) {
-  if(px.size() != py.size()) {
-    cout << "Please pass two columns with the same size for the potential" << endl;
-    return;
-  }
-  // translate the potential and feed it to numerov
-  vector<Point> potential(px.size());
-  for(int i = 0; i < px.size(); i++) {
-    potential[i].x = px(i);
-    potential[i].y = py(i);
-  }
-
-  n->setPotential(potential);
-}
-
-// [[Rcpp::export]]
-List getPotential() {
+List getPotential(SolvSpec* n) {
   vector<Point> p = n->getPotential();
   int length = p.size();
   NumericVector x;
@@ -70,23 +40,14 @@ List getPotential() {
   return List::create(Named("x") = x, Named("y") = y);
 }
 
-// [[Rcpp::export]]
-void computeSpectrum(int nEigen, double dE = 0.1, double tol = 1e-9) {
-  n->dEmin = dE;
-  n->tol = tol;
-  n->findSpectrum(nEigen);
-}
-
-// [[Rcpp::export]]
-NumericVector getEnergies() {
+NumericVector getEnergies(SolvSpec* n) {
   vector<double> energies = n->getSpectrum().getEnergies();
   NumericVector x(energies.begin(), energies.end());
 
   return x;
 }
 
-// [[Rcpp::export]]
-List getWavefunctions() {
+List getWavefunctions(SolvSpec* n) {
   List wfs;
   vector<vector<Point>> WFs = n->getSpectrum().getWavefunctions();
 
@@ -103,4 +64,30 @@ List getWavefunctions() {
   }
 
   return wfs;
+}
+
+// [[Rcpp::export]]
+List computeSpectrum(NumericVector px = NumericVector(),
+                     NumericVector py = NumericVector(),
+                     int nEigen = 3,
+                     std::string method = "cheb",
+                     double dE = 0.1, double tol = 1e-9) {
+  SolvSpec* n = setSchroMethod(method);
+  if(px.size() != py.size()) {
+    cout << "Please pass two columns with the same size for the potential" << endl;
+    return List::create(Named("error") = "Please pass two columns with the same size for the potential");
+  }
+  // translate the potential and feed it to the specific solver
+  vector<Point> potential(px.size());
+  for(int i = 0; i < px.size(); i++) {
+    potential[i].x = px(i);
+    potential[i].y = py(i);
+  }
+
+  n->setPotential(potential);
+  n->dEmin = dE;
+  n->tol = tol;
+  n->findSpectrum(nEigen);
+  return List::create(Named("energies") = getEnergies(n),
+                      Named("wfs") = getWavefunctions(n));
 }

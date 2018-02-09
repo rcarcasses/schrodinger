@@ -1,11 +1,11 @@
 Package: schrodinger
 Type: Package
-Title: What the Package Does (Title Case)
-Version: 0.1.0
-Author: Who wrote it
-Maintainer: Who to complain to <yourfault@somewhere.net>
-Description: More about what it does (maybe more than one line)
-License: What license is it under?
+Title: Find the eigenvalues and eigenfunctions of the one-dimensional Schrodinger problem
+Version: 0.2.0
+Author: Robert Carcassés Quevedo
+Maintainer: Robert Carcassés Quevedo <carcasses@gmail.com>
+Description: This package allows to solve one dimensional quantum mechanic problems by using two different algorithms: Numerov and a Chebyshev polynomial based one.
+License: MIT
 LazyData: TRUE
 Imports:
     Rcpp (>= 0.12.5)

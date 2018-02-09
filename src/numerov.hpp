@@ -264,8 +264,8 @@ void Numerov::findSpectrum(int nEigen){
 
   // using this for we get the right lowest nEigen eigenfunctions
   // most of the times, but sometimes we may skip some, see below.
-  int attempts = 0;
-  int const MAX_ATTEMPTS = 1;
+  // int attempts = 0;
+  // int const MAX_ATTEMPTS = 1;
   for (int i = 0; i < nEigen; i++) {
     Mode m = findSol(zeros[i]);
     modes.push_back(m);

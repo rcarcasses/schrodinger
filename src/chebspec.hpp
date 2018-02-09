@@ -6,37 +6,18 @@
 
 using namespace std;
 using namespace arma;
-// arpack++ can be installed very easily as described in
-// https://github.com/m-reuter/arpackpp/blob/master/INSTALL.md
 
-class ChebSpec : public SolvSpec {
-	private:
-	  int N = -1;
-	  int L = 0;
-	  double b, a, scal;
-	  vector<double> x;
-	  vector<double> V;
-	  vector<vector<double>> Tm;
-	  vector<vector<double>> TmInt;
-	  vector<vector<double>> D;
-	  vector<vector<double>> D2;
-	  vector<vector<double>> Ehat;
-	  vector<vector<double>> UE;
-	  vector<vector<double>> US;
-	  void invMat(double*, int);
-	  void showMatrix(double* A, int Nr);
+int N = -1;
+int L = 0;
 
-	public:
-	  void setN(int n);
-		virtual void findSpectrum(int nEigen);
-		virtual void setPotential(vector<Point>);
-	  ChebSpec() {
-	    // cout << "Initializing ChebSpec" << endl;
-	    setN(20);
-	  }
-};
+vector<double> x;
+vector<vector<double>> Tm;
+vector<vector<double>> TmInt;
+vector<vector<double>> D;
+vector<vector<double>> D2;
 
-void ChebSpec::setN(int n) {
+// [[Rcpp::export]]
+void chebSetN(int n) {
   if(N == n)
     return;
   N = n;
@@ -44,7 +25,6 @@ void ChebSpec::setN(int n) {
   cout << "computing chebyshev matrices, N = " << N << endl;
   // initialize x
   x.resize(L);
-  V.resize(L);
   for(int i = 0; i < L; i++)
     x[i] = -cos(PI * i / N);
 
@@ -96,12 +76,8 @@ void ChebSpec::setN(int n) {
       // prime '' sum
       if(j == 0 || j == L - 1)
         D[i][j] = 0.5 * D[i][j];
-
-      // cout << D[i][j] << " ";
     }
-    // cout << endl;
   }
-
   // finally the D2 = D*D matrix
   // check, the sum of the last row has to be 2 and 0 the sum of the first
   D2.resize(L);
@@ -120,8 +96,26 @@ void ChebSpec::setN(int n) {
   double s = 0;
   for(int k = 0; k < L; k++)
     s += D2[0][k];
-
 }
+
+class ChebSpec : public SolvSpec {
+	private:
+	  double b, a, scal;
+	  vector<double> V;
+    vector<vector<double>> Ehat;
+	  vector<vector<double>> UE;
+	  vector<vector<double>> US;
+	  void invMat(double*, int);
+	  void showMatrix(double* A, int Nr);
+
+	public:
+		virtual void findSpectrum(int nEigen);
+		virtual void setPotential(vector<Point>);
+	  ChebSpec() {
+	    // cout << "Initializing ChebSpec" << endl;
+	    // setN(20);
+	  }
+};
 
 void ChebSpec::setPotential(vector<Point> p) {
   SolvSpec::setPotential(p);
@@ -136,12 +130,10 @@ void ChebSpec::findSpectrum(int nEigen) {
     cout << "Please use the setPotential() function before using this one." << endl;
     return;
   }
-
   // compute V
+  V.resize(L);
   for(int i = 0; i < L; i++)
     V[i] = scal * potFunc(0.5 * ((b - a) * x[i] + b + a));
-
-
   // compute Ehat
   Ehat.resize(L);
   for(int i = 0; i < L; i++) {
@@ -150,7 +142,6 @@ void ChebSpec::findSpectrum(int nEigen) {
       Ehat[i][j] = D2[i][j] * V[j];
     }
   }
-
   // compute UE and US
   UE.resize(L);
   US.resize(L);
@@ -162,7 +153,6 @@ void ChebSpec::findSpectrum(int nEigen) {
       US[i][j] = 0.5 * (x[i] + 1) * Ehat[N][j];
     }
   }
-
   // compute the A and B matrices, remove the first/last row/column
   int Nr = N - 1;
   mat A(Nr, Nr);
@@ -189,7 +179,6 @@ void ChebSpec::findSpectrum(int nEigen) {
   mat eigvec = real(cxeigvec);
   vec eigval = real(cxeigval);
   // we need to sort this
-
   for(int i = 0; i < Nr; i++)
     for(int j = 0; j < Nr; j++)
       if(eigval(i) < eigval(j)) {
@@ -198,10 +187,6 @@ void ChebSpec::findSpectrum(int nEigen) {
         eigval(j) = temp;
         eigvec.swap_cols(i, j);
       }
-
-  // for(int i = 0; i < Nr; i++)
-  //   cout << "E" << i << " = " << eigval(i) / scal << endl;
-
   // now we just need to put everything in our internal format
   // finally safelly add all the modes found to the spectrum (already in a nice way)
   spectrum.clear();
@@ -211,12 +196,10 @@ void ChebSpec::findSpectrum(int nEigen) {
     vector<Point> wf;
     for(int j = 0; j < Nr; j++)
       wf.push_back(Point(0.5 * ((b - a) * x[j] + b + a), eigvec(j,i)));
-
     // normalization loop
     double c = 0;
     for(int j = 0; j < Nr; j++)
       c += D[N][j + 1] * wf[j].y * wf[j].y * 0.5 * (b - a);
-
     // set all the wavefunctions start growing positive from the left
     double s = 1;
     // get the sign of the derivative, this is important since it may be the case
@@ -231,14 +214,12 @@ void ChebSpec::findSpectrum(int nEigen) {
         break;
       }
     }
-
     for(int j = 0; j < Nr; j++)
         wf[j].y = s * wf[j].y / sqrt(c);
 
     Mode m(eigval(i) / scal, wf);
     spectrum.addMode(m);
   }
-
 }
 
 void ChebSpec::showMatrix(double* A, int Nr) {

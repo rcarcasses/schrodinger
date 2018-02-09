@@ -5,89 +5,36 @@
 
 using namespace Rcpp;
 
-// setSchroMethod
-void setSchroMethod(std::string method, int N);
-RcppExport SEXP _schrodinger_setSchroMethod(SEXP methodSEXP, SEXP NSEXP) {
+// chebSetN
+void chebSetN(int n);
+RcppExport SEXP _schrodinger_chebSetN(SEXP nSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::string >::type method(methodSEXP);
-    Rcpp::traits::input_parameter< int >::type N(NSEXP);
-    setSchroMethod(method, N);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    chebSetN(n);
     return R_NilValue;
-END_RCPP
-}
-// getEnergiesAndIndices
-List getEnergiesAndIndices();
-RcppExport SEXP _schrodinger_getEnergiesAndIndices() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(getEnergiesAndIndices());
-    return rcpp_result_gen;
-END_RCPP
-}
-// setPotential
-void setPotential(NumericVector px, NumericVector py);
-RcppExport SEXP _schrodinger_setPotential(SEXP pxSEXP, SEXP pySEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericVector >::type px(pxSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type py(pySEXP);
-    setPotential(px, py);
-    return R_NilValue;
-END_RCPP
-}
-// getPotential
-List getPotential();
-RcppExport SEXP _schrodinger_getPotential() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(getPotential());
-    return rcpp_result_gen;
 END_RCPP
 }
 // computeSpectrum
-void computeSpectrum(int nEigen, double dE, double tol);
-RcppExport SEXP _schrodinger_computeSpectrum(SEXP nEigenSEXP, SEXP dESEXP, SEXP tolSEXP) {
+List computeSpectrum(NumericVector px, NumericVector py, int nEigen, std::string method, double dE, double tol);
+RcppExport SEXP _schrodinger_computeSpectrum(SEXP pxSEXP, SEXP pySEXP, SEXP nEigenSEXP, SEXP methodSEXP, SEXP dESEXP, SEXP tolSEXP) {
 BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type px(pxSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type py(pySEXP);
     Rcpp::traits::input_parameter< int >::type nEigen(nEigenSEXP);
+    Rcpp::traits::input_parameter< std::string >::type method(methodSEXP);
     Rcpp::traits::input_parameter< double >::type dE(dESEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    computeSpectrum(nEigen, dE, tol);
-    return R_NilValue;
-END_RCPP
-}
-// getEnergies
-NumericVector getEnergies();
-RcppExport SEXP _schrodinger_getEnergies() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(getEnergies());
-    return rcpp_result_gen;
-END_RCPP
-}
-// getWavefunctions
-List getWavefunctions();
-RcppExport SEXP _schrodinger_getWavefunctions() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(getWavefunctions());
+    rcpp_result_gen = Rcpp::wrap(computeSpectrum(px, py, nEigen, method, dE, tol));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_schrodinger_setSchroMethod", (DL_FUNC) &_schrodinger_setSchroMethod, 2},
-    {"_schrodinger_getEnergiesAndIndices", (DL_FUNC) &_schrodinger_getEnergiesAndIndices, 0},
-    {"_schrodinger_setPotential", (DL_FUNC) &_schrodinger_setPotential, 2},
-    {"_schrodinger_getPotential", (DL_FUNC) &_schrodinger_getPotential, 0},
-    {"_schrodinger_computeSpectrum", (DL_FUNC) &_schrodinger_computeSpectrum, 3},
-    {"_schrodinger_getEnergies", (DL_FUNC) &_schrodinger_getEnergies, 0},
-    {"_schrodinger_getWavefunctions", (DL_FUNC) &_schrodinger_getWavefunctions, 0},
+    {"_schrodinger_chebSetN", (DL_FUNC) &_schrodinger_chebSetN, 1},
+    {"_schrodinger_computeSpectrum", (DL_FUNC) &_schrodinger_computeSpectrum, 6},
     {NULL, NULL, 0}
 };
 

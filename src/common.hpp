@@ -35,7 +35,7 @@ struct Mode {
   int index;
 	vector<Point> wavefunction;
 	Mode() {   // default constructor for non good modes
-	    index = -1;
+    index = -1;
 	}
 	Mode(double e, vector<Point> f){
 		energy = e;
@@ -53,30 +53,29 @@ struct Spectrum {
 	vector<Point> potential;
 
 	void addMode(Mode m) {
-	   	modes.push_back(m);
+   	modes.push_back(m);
 	}
 
 	void clear() {
-	   	modes.clear();
-		potential.clear();
-   	}
+   	modes.clear();
+	  potential.clear();
+ 	}
 
-    vector<double> getEnergies() {
-        vector<double> energies;
-        for(int i = 0; i < modes.size(); i++)
-            energies.push_back(modes[i].energy);
+  vector<double> getEnergies() {
+    vector<double> energies;
+    for(int i = 0; i < modes.size(); i++)
+      energies.push_back(modes[i].energy);
 
-        return energies;
-    }
+    return energies;
+  }
 
-    vector<vector<Point>> getWavefunctions() {
-        vector<vector<Point>> wfs;
-        for(int i = 0; i < modes.size(); i++)
-            wfs.push_back(modes[i].wavefunction);
+  vector<vector<Point>> getWavefunctions() {
+    vector<vector<Point>> wfs;
+    for(int i = 0; i < modes.size(); i++)
+      wfs.push_back(modes[i].wavefunction);
 
-        return wfs;
-    }
-
+    return wfs;
+  }
 };
 
 // Van Wijngaarden–Dekker–Brent Method for finding root, from NR
